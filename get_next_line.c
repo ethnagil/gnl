@@ -6,76 +6,90 @@
 /*   By: egillesp <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2020/12/03 13:01:22 by egillesp          #+#    #+#             */
-/*   Updated: 2020/12/03 15:14:20 by egillesp         ###   ########lyon.fr   */
+/*   Updated: 2020/12/09 16:16:06 by egillesp         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
-/*
-** Get the length of the dictionary file, then transforms it to a string that
-** we malloc.
-*/
+#include "get_next_line.h"
 
-#include <stdlib.h>
-#include <unistd.h>
-
-int			get_line_len(int fd)
+void	ft_bzero(void *s, size_t n)
 {
-	char	c;
-	int		i;
+	size_t	i;
+	char	*str;
+
+	str = (char*)s;
+	i = 0;
+	while (i < n)
+	{
+		str[i] = '\0';
+		i++;
+	}
+}
+
+int		ft_eol(char *buf, char *bufover)
+{
+	int	i;
+	int	j;
 
 	i = 0;
-	while (read(fd, &c, 1) > 0)
+	j = 0;
+	while (i < BUFFER_SIZE)
+	{
+		if (buf[i] == '\n')
+		{
+			buf[i] = 0;
+			i++;
+			while ((i + j) <= BUFFER_SIZE - 1)
+			{
+				bufover[j] = buf[i + j];
+				j++;
+			}
+			bufover[j] = '\0';
+			return (1);
+		}
 		i++;
-	close(fd);
-	return (i);
+	}
+	return (0);
+}
+
+char	*ft_concatbuf(char *line, char *buf)
+{
+	char *line2;
+
+	if (line[0] == 0)
+	{
+		line2 = ft_strdup(buf);
+	}
+	else
+	{
+		line2 = ft_strjoin(line, buf);
+	}
+	free(line);
+	return (line2);
 }
 
 int		get_next_line(int fd, char **line)
 {
-	char	c;
-	int		i;
-	int		len;
+	char		buf[BUFFER_SIZE + 1];
+	static char	bufover[BUFFER_SIZE + 1];
+	int			eol;
 
-	i = 0;
-	if (fd == 0)
-		return (0);
-	len = get_line_len(fd);
-	if (!(*line = (char *)malloc(sizeof(char) * (len + 1))))
-		return (0);
-	while (read(fd, &c, 1) > 0)
+	if (!line || (fd < 0) || (read(fd, buf, 0) < 0) || (BUFFER_SIZE == 0))
+		return (-1);
+	eol = 0;
+	*line = ft_calloc(1, 1);
+	while (!eol)
 	{
-		*line[i] = c;
-		i++;
+		ft_bzero(buf, BUFFER_SIZE + 1);
+		ft_strlcpy(buf, bufover, BUFFER_SIZE);
+		ft_bzero(bufover, BUFFER_SIZE + 1);
+		if (buf[0] == 0)
+			if (read(fd, buf, BUFFER_SIZE) < 1)
+			{
+				return (read(fd, buf, BUFFER_SIZE));
+			}
+		eol = ft_eol(buf, bufover);
+		*line = ft_concatbuf(*line, buf);
 	}
-	*line[i] = '\0';
-	close(fd);
 	return (1);
 }
-
-
-//#include "get_next_line.h"
-#include <fcntl.h>
-#include <stdio.h>
-
-int		main(int argc, char **argv)
-{
-	int		fd;
-	char	*line;
-
-	if (argc == 1)
-		fd = 0;
-	else if (argc == 2)
-		fd = open(argv[1], O_RDONLY);
-	else
-		return (2);
-	printf("input line: %s\n", argv[1]);
-	while (get_next_line(fd, &line) == 1)
-	{
-		printf("line read: %s\n", line);
-//		ft_putendl(line);
-		free(line);
-	}
-	if (argc == 2)
-		close(fd);
-}
-
