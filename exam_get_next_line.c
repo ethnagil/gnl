@@ -10,13 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-//#include <fcntl.h>
-
-#include <sys/types.h>
-#include <sys/uio.h>
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include "get_next_line.h"
 
 int	ft_strlen(char *str)
 {
@@ -117,13 +111,13 @@ void	ft_bzero(void *s, size_t n)
 	}
 }
 
-int	get_next_line(int fd, char **line)
+int	get_next_line(char **line)
 {
-	char 		buf[BUFFER_SIZE + 1];
-	static char	bufover[BUFFER_SIZE + 1];
+	char 		buf[11];
+	static char	bufover[11];
 	int			eol;
 
-	if ((!line) || (fd < 0) || (read(fd, buf, 0) < 0) || (BUFFER_SIZE == 0))
+	if ((!line) || (read(0, buf, 0) < 0))
 		return(-1);
 	eol = 0;
 	if ((*line = (char *)malloc(sizeof(char) * 2)) == 0)
@@ -131,12 +125,14 @@ int	get_next_line(int fd, char **line)
 	line[0] = 0;
 	while(!eol)
 	{
-		ft_bzero(buf, BUFFER_SIZE + 1);
+		ft_bzero(buf, 11);
 		ft_strcpy(buf, bufover);
-		ft_bzero(bufover, BUFFER_SIZE + 1);
+		ft_bzero(bufover, 11);
 		if (buf[0] == '\0')
-			if (read(fd, buf, BUFFER_SIZE) < 1)
-				return (read(fd, buf, BUFFER_SIZE));
+		{
+			if (read(0, buf, 10) < 1)
+				return (read(0, buf, 10));
+		}
 		eol = ft_eol(buf, bufover);
 		*line = ft_strjoin(*line, buf);
 	}
